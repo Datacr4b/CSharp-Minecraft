@@ -1,0 +1,7 @@
+C:\Users\julia.menshikov\Desktop\Tortoise C# Projects\CSharp-Minecraft\Minecraft\Minecraft\bin\Debug\Minecraft.exe.config
+C:\Users\julia.menshikov\Desktop\Tortoise C# Projects\CSharp-Minecraft\Minecraft\Minecraft\bin\Debug\Minecraft.exe
+C:\Users\julia.menshikov\Desktop\Tortoise C# Projects\CSharp-Minecraft\Minecraft\Minecraft\bin\Debug\Minecraft.pdb
+C:\Users\julia.menshikov\Desktop\Tortoise C# Projects\CSharp-Minecraft\Minecraft\Minecraft\obj\Debug\Minecraft.csproj.AssemblyReference.cache
+C:\Users\julia.menshikov\Desktop\Tortoise C# Projects\CSharp-Minecraft\Minecraft\Minecraft\obj\Debug\Minecraft.csproj.CoreCompileInputs.cache
+C:\Users\julia.menshikov\Desktop\Tortoise C# Projects\CSharp-Minecraft\Minecraft\Minecraft\obj\Debug\Minecraft.exe
+C:\Users\julia.menshikov\Desktop\Tortoise C# Projects\CSharp-Minecraft\Minecraft\Minecraft\obj\Debug\Minecraft.pdb
