@@ -4,8 +4,10 @@ using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Remoting.Channels;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using Minecraft.Properties;
 
 namespace Minecraft
 {
@@ -14,25 +16,16 @@ namespace Minecraft
     {
         static void Main(string[] args)
         {
-            Game main = new Game();
-            main.MainMenu();
+            GameMenu main = new GameMenu(); // Create Instance of GameMenu
+            main.MainMenu(); // Start Main Menu
         }
         
         
     }
 
-    class Game
+    class GameMenu
     {
-        private Player player;
-        private GameMap map;
-        public Game(int mapSize)
-        {
-            map = new GameMap(); 
-            player = new Player((mapSize / 2, mapSize / 2));
-        }
-        public Game()
-        {
-        }
+        private GameInitialization gameinit = new GameInitialization(); // Composed of GameInit
 
         public void MainMenu() // Main Menu
         {
@@ -47,7 +40,7 @@ namespace Minecraft
                 input = Utility.GetValidStringInput("Pick an option: ");
                 input = input.Trim().ToLower();
                 if (input == "1")
-                    GameInit();
+                    gameinit.GameInit();
                 else if (input == "2")
                     break;
                 else
@@ -57,6 +50,14 @@ namespace Minecraft
             }
         }
 
+
+    }
+
+    class GameInitialization
+    {
+        private GameEngine engine = new GameEngine(); // composed of GameEngine, Player and Map.
+        private Player player;
+        private GameMap map;
         public void GameInit() // Map Size and Map Generation Initialized
         {
             string mapSizeString;
@@ -72,13 +73,18 @@ namespace Minecraft
             map = new GameMap();
             player = new Player((mapSize / 2, mapSize / 2));
             map.CreateMap(mapSize, player);
-            MainGame();
+            engine.MainGame(player, map);
         }
+    }
 
-        public void MainGame() // The Game itself - Display Map and Handle movement
+    class GameEngine
+    {
+        public GameEngine() { }
+
+        public void MainGame(Player player, GameMap map) // Dependency on player and map from GameInit
         {
             ConsoleKeyInfo moveInput;
-            char selectedBlock;
+            Tile selectedBlock = new PlacedBlock();
 
             while (true)
             {
@@ -92,7 +98,7 @@ namespace Minecraft
                 }
                 else if (moveInput.Key == ConsoleKey.V)
                 {
-                    selectedBlock = player.ViewInventory();
+                    player.SelectedBlock = player.InventoryUI.ViewInventory(selectedBlock);
                 }
                 else
                 {
@@ -105,19 +111,9 @@ namespace Minecraft
                 }
             }
         }
-
-
     }
 
-    static class TileTypes
-    {
-        public const char Empty = ' ';
-        public const char Block = '▒';
-        public const char PlacedBlock = '#';
-        public const char Tree = '\x05';
-    }
-
-    static class Utility
+    static class Utility // Utility static
     {
         public static string GetValidStringInput(string localisation) // For Input Loops 
         {
@@ -141,36 +137,28 @@ namespace Minecraft
     {
         private string icon;
         private (int dx, int dy) playerPos;
-        private GameMode mode = GameMode.Move; // Default - Move mode
-        private char selectedBlock = TileTypes.PlacedBlock;
+        private GameMode mode;
+        private Tile selectedBlock;
+        private InventoryData playerInvData;
+        private InventoryUI inventoryUI;
 
-        public string Icon 
-        {
-            get { return icon; }
-            set { icon = value; }
-        }
-        public (int dx,int dy) PlayerPos
-        {
-            get { return playerPos; }
-            set { playerPos = value; }
-        }
-        public GameMode Mode
-        {
-            get { return mode; }
-            set { mode = value; }
-        }
-        public char SelectedBlock
-        {
-            get { return selectedBlock; }
-            set { selectedBlock = value; }
-        }
+        public string Icon { get { return icon; } set { icon = value; } }
+        public (int dx,int dy) PlayerPos { get { return playerPos; } set { playerPos = value; } }
+        public GameMode Mode { get { return mode; } set { mode = value; } }
+        public Tile SelectedBlock { get { return selectedBlock; } set { selectedBlock = value; }  }
+        public InventoryData PlayerInvData { get { return playerInvData; } set { playerInvData = value; } }
+        public InventoryUI InventoryUI { get { return inventoryUI; } set { inventoryUI = value; } }
         public Player((int,int) playerPos) : base() // Position is defined on instance
         {
             Icon = "\x01";
             PlayerPos = playerPos;
+            PlayerInvData = new InventoryData();
+            inventoryUI = new InventoryUI(PlayerInvData);
+            SelectedBlock = new PlacedBlock();
+            Mode = GameMode.Move;
         }
 
-        public bool GetAdjacentTile(int dy, int dx, List<List<char>> map, out char tile)
+        public bool GetAdjacentTile(int dy, int dx, List<List<Tile>> map, out Tile tile)
         // Dx - Direction X Dy - Direction Y 
         {
             int newDy = playerPos.dy + dy;
@@ -184,14 +172,14 @@ namespace Minecraft
             }
             else
             {
-                tile = ' ';
+                tile = null;
                 return false;
             }
         }
 
-        public void HandleDirection(string entry, List<List<char>> map, Action<int, int, char> action)
+        public void HandleDirection(string entry, List<List<Tile>> map, Action<int, int, Tile> action)
         {
-            char tile;
+            Tile tile;
             int dx = 0;
             int dy = 0;
 
@@ -208,96 +196,45 @@ namespace Minecraft
             }
         }
 
-        public void Move(string entry, List<List<char>> map) // Move Method
+        public void Move(string entry, List<List<Tile>> map) // Move Method
         {
 
             HandleDirection(entry, map, (dy, dx, tile) =>
             {
-                if (tile == TileTypes.Empty)
+                if (tile.IsWalkable)
                     playerPos = (playerPos.dx + dx,  playerPos.dy + dy);
             }
             );
 
         }
 
-        public void Mine(string entry, List<List<char>> map) // Mine Method
+        public void Mine(string entry, List<List<Tile>> map) // Mine Method
         {
             HandleDirection(entry, map, (dy, dx, tile) =>
             {
-                if (tile == TileTypes.Block || tile == TileTypes.PlacedBlock)
+                if (tile.IsMineable)
                 {
-                    map[playerPos.dy + dy][playerPos.dx + dx] = ' ';
-                    Inventory.blocks++;
-                }
-                else if (tile == TileTypes.Tree)
-                {
-                    map[playerPos.dy + dy][playerPos.dx + dx] = ' ';
-                    Inventory.wood++;
+                    map[playerPos.dy + dy][playerPos.dx + dx] = new Empty();
+                    PlayerInvData.inventory[tile]++;
                 }
             }
             );
         }
 
-        public void Place(string entry, List<List<char>> map, char selectedBlock) // Place Method
+        public void Place(string entry, List<List<Tile>> map, Tile selectedBlock) // Place Method
         {
-            if ((selectedBlock == TileTypes.PlacedBlock && Inventory.blocks > 0) || (selectedBlock == TileTypes.Tree && Inventory.wood > 0))
+            if (selectedBlock.IsPlaceable && PlayerInvData.inventory[selectedBlock] > 0)
             {
                 HandleDirection(entry, map, (dy, dx, tile) =>
                 {
-                    if (tile == TileTypes.Empty)
+                    if (tile.IsWalkable)
                     {
                         map[playerPos.dy + dy][playerPos.dx + dx] = selectedBlock;
-                        if (selectedBlock == TileTypes.Tree)
-                            Inventory.wood--;
-                        else if (selectedBlock == TileTypes.PlacedBlock)
-                            Inventory.blocks--;
+                        PlayerInvData.inventory[selectedBlock]--;
                     }
                 }
                 );
             }
-        }
-
-        public char ViewInventory()
-        {
-            ConsoleKeyInfo selectInput = new ConsoleKeyInfo();
-            char selectBlocks = '\x10';
-            char selectWood = ' ';
-
-            while (true)
-            {
-
-                Console.Clear();
-                Console.WriteLine("╔═══════════╗");
-                Console.WriteLine($"║{selectBlocks} Blocks: {Inventory.blocks}║");
-                Console.WriteLine($"║{selectWood} Wood:   {Inventory.wood}║");
-                Console.WriteLine("╚═══════════╝");
-                selectInput = Console.ReadKey();
-                if (selectInput.Key == ConsoleKey.DownArrow || selectInput.Key == ConsoleKey.UpArrow)
-                {
-                    if (selectBlocks == '\x10')
-                    {
-                        selectBlocks = ' ';
-                        selectWood = '\x10';
-                        selectedBlock = TileTypes.Tree;
-                    }
-                    else if (selectBlocks == ' ')
-                    {
-                        selectBlocks = '\x10';
-                        selectWood = ' ';
-                        selectedBlock = TileTypes.PlacedBlock;
-                    }
-                }
-                else if (selectInput.Key == ConsoleKey.Q)
-                {
-                    break;
-                }
-                else if (selectInput.Key == ConsoleKey.Enter)
-                {
-                    return selectedBlock;
-                }
-            }
-            return selectedBlock;
-
         }
 
         public void SwitchMode(ConsoleKeyInfo moveInput) // Switch mode
@@ -309,41 +246,114 @@ namespace Minecraft
         }
     }
 
-    static class Inventory
+    public class InventoryData
     {
-        public static int wood = 0;
-        public static int blocks = 0;
+        public Dictionary<Tile, int> inventory = new Dictionary<Tile, int>();
+
+        public InventoryData()
+        {
+            inventory = new Dictionary<Tile, int>()
+            {
+                {new PlacedBlock(),0 },
+                {new Tree(),0 },
+                {new Stone(),0 }
+            };
+        }
+
+    }
+
+    public class InventoryUI
+    {
+        private InventoryData invData;
+        private int selectedIndex = 0;
+        public InventoryUI(InventoryData invData)
+        {
+            this.invData = invData;
+        }
+
+        public Tile ViewInventory(Tile selectedBlock)
+        {
+            ConsoleKeyInfo selectInput = new ConsoleKeyInfo();
+            int i =0;
+            int width = 0;
+            int widthTemp;
+
+            foreach (KeyValuePair<Tile, int> kvp in invData.inventory) // Determine the longest width
+            {
+                widthTemp = kvp.Key.InvName.Length;
+                if (widthTemp > width)
+                {
+                    width = widthTemp;  
+                }
+            }
+            
+
+            while (true)
+            {
+
+                Console.Clear();
+                Console.WriteLine("╔" + new string('═', width+8) + "╗");
+                foreach (KeyValuePair<Tile,int> kvp in invData.inventory)
+                {
+                    Console.WriteLine($"║{(selectedIndex == i ? '\x10' : ' ')}'{kvp.Key.Icon}' {kvp.Key.InvName}: {new string(' ', width - kvp.Key.InvName.Length)}{kvp.Value}║");
+                    i++;
+                }
+                i = 0;
+                Console.WriteLine("╚" + new string('═', width+8) + "╝");
+                selectInput = Console.ReadKey();
+                if (selectInput.Key == ConsoleKey.DownArrow)
+                {
+                    selectedIndex = (selectedIndex + 1) % 3;
+                }
+                else if (selectInput.Key == ConsoleKey.UpArrow)
+                {
+                    selectedIndex = (selectedIndex - 1 + 3) % 3;
+                }
+                else if (selectInput.Key == ConsoleKey.Q)
+                {
+                    break;
+                }
+                else if (selectInput.Key == ConsoleKey.Enter)
+                {
+                    return selectedBlock = invData.inventory.ElementAt(selectedIndex).Key;
+                }
+            }
+            return selectedBlock;
+
+        }
     }
 
     class GameMap // Game Map class, has the Map and GameModes
     {
-        public List<List<char>> map;
+        public List<List<Tile>> map;
         private static Random rnd = new Random(); // Initialize Random Class
 
         public GameMap() // Constructor 
         {
-            map = new List<List<char>>();
+            map = new List<List<Tile>>();
         }
         
         public void CreateMap(int mapSize, Player player) // Generates Map
         {
             for (int y = 0; y < mapSize; y++)
             {
-                map.Add(new List<char>());
+                map.Add(new List<Tile>());
                 for (int x = 0; x < mapSize; x++)
                 {
                     if (x != player.PlayerPos.dx || y != player.PlayerPos.dy)
                     {
-                        if (rnd.Next(1, 10) == 1) // 25% chance a block spawns
-                            map[y].Add(TileTypes.Block);
-                        else if (rnd.Next(1, 7) == 1)
-                            map[y].Add(TileTypes.Tree);
+                        if (rnd.Next(1, 11) == 1) // 10% chance a block spawns
+                            map[y].Add(new Stone());
+                        else if (rnd.Next(1, 11) == 1)
+                            map[y].Add(new Tree());
+                        else if (rnd.Next(1, 11) == 1)
+                            map[y].Add(new PlacedBlock());
                         else // Otherwise empty space
-                            map[y].Add(TileTypes.Empty);
+                            map[y].Add(new Empty());
                     }
                     else
                     {
-                        map[y].Add(TileTypes.Empty);
+                        map[y].Add(new Empty());
                     }
                 }
             }
@@ -375,7 +385,7 @@ namespace Minecraft
                         if (x == player.PlayerPos.dx && y == player.PlayerPos.dy)
                             row.Append(player.Icon);
                         else
-                            row.Append(map[y][x]);
+                            row.Append(map[y][x].Icon);
                     }
                     row.Append("║");
                     Console.WriteLine(row.ToString());

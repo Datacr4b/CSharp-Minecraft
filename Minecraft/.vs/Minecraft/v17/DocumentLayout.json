@@ -5,6 +5,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{662BEBF2-47EA-433A-B0A5-AF3175807D58}|Minecraft\\Minecraft.csproj|c:\\users\\julia.menshikov\\desktop\\tortoise c# projects\\csharp-minecraft\\minecraft\\minecraft\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{662BEBF2-47EA-433A-B0A5-AF3175807D58}|Minecraft\\Minecraft.csproj|solutionrelative:minecraft\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{662BEBF2-47EA-433A-B0A5-AF3175807D58}|Minecraft\\Minecraft.csproj|C:\\Users\\julia.menshikov\\Desktop\\Tortoise C# Projects\\CSharp-Minecraft\\Minecraft\\minecraft\\properties\\blocks.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{662BEBF2-47EA-433A-B0A5-AF3175807D58}|Minecraft\\Minecraft.csproj|solutionrelative:minecraft\\properties\\blocks.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,8 +18,21 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "blocks.cs",
+              "DocumentMoniker": "C:\\Users\\julia.menshikov\\Desktop\\Tortoise C# Projects\\CSharp-Minecraft\\Minecraft\\Minecraft\\Properties\\blocks.cs",
+              "RelativeDocumentMoniker": "Minecraft\\Properties\\blocks.cs",
+              "ToolTip": "C:\\Users\\julia.menshikov\\Desktop\\Tortoise C# Projects\\CSharp-Minecraft\\Minecraft\\Minecraft\\Properties\\blocks.cs",
+              "RelativeToolTip": "Minecraft\\Properties\\blocks.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAYwBEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-09T11:54:47.755Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
@@ -24,7 +41,7 @@
               "RelativeDocumentMoniker": "Minecraft\\Program.cs",
               "ToolTip": "C:\\Users\\julia.menshikov\\Desktop\\Tortoise C# Projects\\CSharp-Minecraft\\Minecraft\\Minecraft\\Program.cs",
               "RelativeToolTip": "Minecraft\\Program.cs",
-              "ViewState": "AgIAADgBAAAAAAAAAAAcwFoAAAAxAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAATAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-06T09:52:10.467Z",
               "EditorCaption": ""
